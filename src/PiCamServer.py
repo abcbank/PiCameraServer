@@ -7,6 +7,8 @@ from threading import Condition, Thread
 from http import server
 import RPi.GPIO as GPIO
 import time
+import codecs
+
 
 Thread1:Thread = Thread()
 Thread2:Thread = Thread()
@@ -24,52 +26,8 @@ GPIO.setup(Motor2, GPIO.OUT)
 GPIO.output(Motor1, GPIO.LOW)
 GPIO.output(Motor2, GPIO.LOW)
 
-PAGE="""\
-    <html>
-        <head>
-        <title>Camera Test Module</title>
-        </head>
+PAGE=codecs.open("./index.html", "r").read()
 
-        <body>
-        <h1>Camera Test Module</h1>
-        <img src="stream.mjpg" width="640" height="480"/>
-        <br/>
-        <form action="">
-            <input type="hidden" name="StartSequence" id="StartSequence" value="true">
-            <input type="submit" value="Start Sequence">
-        </form>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.js"></script>
-        <script type="text/javascript">
-            function ChangeSequenceStatus() {
-                var SequenceButton = document.getElementById("SequenceButton");
-                var SequenceStatus = document.getElementById("SequenceStatus");
-                if(SequenceStatus.value == 'false'){
-                    SequenceStatus.value = 'true';
-                }
-                else{
-                    SequenceStatus.value = 'false';
-                }
-                //var blob = new Blob([SequenceStatus.value],{type: "text/plain;charset=utf-8"});
-                //saveAs(blob, "SequenceStatus.txt");
-                SequenceButton.innerText= SequenceStatus.value == 'true' ? "Sequence Processing..." : "Start Sequence"; 
-            }
-            function ChangeStreamingStatus() {
-                var StreamingButton = document.getElementById("StreamingButton");
-                var StreamingStatus = document.getElementById("StreamingStatus");
-                if(StreamingStatus.value == 'false'){
-                    StreamingStatus.value = 'true';
-                }
-                else{
-                    StreamingStatus.value = 'false';
-                }
-                StreamingButton.innerText= StreamingStatus.value == 'true' ? "스트리밍 중지" : "스트리밍 시작";
-            }
-        </script>
-        <!-- <button id="SequenceButton" style="width:300;"  type="button" onclick="ChangeSequenceStatus()">
-            Start Sequence
-        </button> -->
-    </html>
-"""
 server_socket = default
 client_socket = default
 
@@ -106,7 +64,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.send_header('Content-Length', len(content))
             self.end_headers()
             self.wfile.write(content)
-        elif self.path == '/index.html?StartSequence=true':
+        elif self.path == '/index.html?sequence=true':
             content = PAGE.encode('utf-8')
             self.send_response(200)
             self.send_header('Content-Type', 'text/html')
@@ -114,6 +72,22 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(content)
             SequenceProcessing()
+        elif self.path == '/index.html?left=true':
+            content = PAGE.encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html')
+            self.send_header('Content-Length', len(content))
+            self.end_headers()
+            self.wfile.write(content)
+            MoveLeft()
+        elif self.path == '/index.html?right=true':
+            content = PAGE.encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html')
+            self.send_header('Content-Length', len(content))
+            self.end_headers()
+            self.wfile.write(content)
+            MoveRight()
         elif self.path == '/stream.mjpg':
             self.send_response(200)
             self.send_header('Age', 0)
@@ -155,6 +129,28 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     allow_reuse_address = True
     daemon_threads = True
 
+def MoveLeft():
+    global Thread1
+    global Thread2
+    print("Move Left!!")
+    if((not Thread1.is_alive()) and (not Thread1.is_alive())):
+        Thread1 = Thread(target=MoveMotorLeft)
+        Thread1.start()
+
+def MoveMotorLeft():
+    print("Move Motor Left")
+
+
+def MoveRight():
+    global Thread1
+    global Thread2
+    print("Move Right!!")
+    if((not Thread1.is_alive()) and (not Thread1.is_alive())):
+        Thread1 = Thread(target=MoveMotorRight)
+        Thread1.start()
+
+def MoveMotorRight():
+    print("Move Motor Right")
 
 def SequenceProcessing():
     global Thread1
