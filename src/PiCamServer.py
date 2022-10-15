@@ -12,6 +12,7 @@ import codecs
 
 Thread1:Thread = Thread()
 Thread2:Thread = Thread()
+StopTrigger:bool = False
 Switch1 = 3
 Switch2 = 5
 Motor1 = 16
@@ -57,37 +58,28 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.send_response(301)
             self.send_header('Location', '/index.html')
             self.end_headers()
-        elif self.path == '/index.html':
+        elif '/index.html' in self.path:
             content = PAGE.encode('utf-8')
             self.send_response(200)
             self.send_header('Content-Type', 'text/html')
             self.send_header('Content-Length', len(content))
             self.end_headers()
             self.wfile.write(content)
-        elif self.path == '/index.html?sequence=true':
-            content = PAGE.encode('utf-8')
-            self.send_response(200)
-            self.send_header('Content-Type', 'text/html')
-            self.send_header('Content-Length', len(content))
-            self.end_headers()
-            self.wfile.write(content)
-            SequenceProcessing()
-        elif self.path == '/index.html?left=true':
-            content = PAGE.encode('utf-8')
-            self.send_response(200)
-            self.send_header('Content-Type', 'text/html')
-            self.send_header('Content-Length', len(content))
-            self.end_headers()
-            self.wfile.write(content)
-            MoveLeft()
-        elif self.path == '/index.html?right=true':
-            content = PAGE.encode('utf-8')
-            self.send_response(200)
-            self.send_header('Content-Type', 'text/html')
-            self.send_header('Content-Length', len(content))
-            self.end_headers()
-            self.wfile.write(content)
-            MoveRight()
+            if 'sequence=true' in self.path:
+                SequenceProcessing()
+            elif 'left=true' in self.path:
+                MoveLeft()
+            elif 'right=true' in self.path:
+                MoveRight()
+            elif 'left=true' in self.path:
+                MoveLeft()
+            elif 'continuous-left=true' in self.path:
+                MoveLeftContinuous()
+            elif 'continuous-right=true' in self.path:
+                MoveRightContinuous()
+            elif 'stop=true' in self.path:
+                Stop()
+
         elif self.path == '/stream.mjpg':
             self.send_response(200)
             self.send_header('Age', 0)
@@ -132,25 +124,58 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 def MoveLeft():
     global Thread1
     global Thread2
-    print("Move Left!!")
+    global StopTrigger
     if((not Thread1.is_alive()) and (not Thread1.is_alive())):
-        Thread1 = Thread(target=MoveMotorLeft)
+        print("Move Left")
+        Threda1 = Thread(target=MoveMotorLeft)
         Thread1.start()
-
-def MoveMotorLeft():
-    print("Move Motor Left")
-
 
 def MoveRight():
     global Thread1
     global Thread2
-    print("Move Right!!")
     if((not Thread1.is_alive()) and (not Thread1.is_alive())):
+        print("Move Right")
         Thread1 = Thread(target=MoveMotorRight)
         Thread1.start()
 
+def MoveLeftContinuous():
+    global Thread1
+    global Thread2
+    if((not Thread1.is_alive()) and (not Thread1.is_alive())):
+        print("Move Right Continuous")
+        Thread1 = Thread(target=MoveMotorLeftContinuous)
+        Thread1.start()
+
+def MoveRightContinuous():
+    global Thread1
+    global Thread2
+    if((not Thread1.is_alive()) and (not Thread1.is_alive())):
+        print("Move Right Continuous")
+        Thread1 = Thread(target=MoveMotorRightContinuous)
+        Thread1.start()
+
+def MoveMotorLeftContinuous():
+    global StopTrigger
+    StopTirgger = False
+    while StopTrigger:
+        MoveMotorLeft()
+
+def MoveMotorRightContinuous():
+    global StopTrigger
+    StopTirgger = False
+    while StopTrigger:
+        MoveMotorRight()
+
+def MotorStop():
+    global StopTrigger
+    StopTrigger = True
+     
+
 def MoveMotorRight():
-    print("Move Motor Right")
+    print("우측로 1회 이동")
+    
+def MoveMotorLeft():
+    print("좌측으로 1회 이동")
 
 def SequenceProcessing():
     global Thread1
