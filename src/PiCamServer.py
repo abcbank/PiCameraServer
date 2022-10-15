@@ -67,16 +67,14 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.wfile.write(content)
             if 'sequence=true' in self.path:
                 SequenceProcessing()
-            elif 'left=true' in self.path:
-                MoveLeft()
-            elif 'right=true' in self.path:
-                MoveRight()
-            elif 'left=true' in self.path:
-                MoveLeft()
             elif 'continuous-left=true' in self.path:
                 MoveLeftContinuous()
             elif 'continuous-right=true' in self.path:
                 MoveRightContinuous()
+            elif 'left=true' in self.path:
+                MoveLeft()
+            elif 'right=true' in self.path:
+                MoveRight()
             elif 'stop=true' in self.path:
                 Stop()
 
@@ -125,15 +123,15 @@ def MoveLeft():
     global Thread1
     global Thread2
     global StopTrigger
-    if((not Thread1.is_alive()) and (not Thread1.is_alive())):
+    if((not Thread1.is_alive()) and (not Thread2.is_alive())):
         print("Move Left")
-        Threda1 = Thread(target=MoveMotorLeft)
+        Thread1 = Thread(target=MoveMotorLeft)
         Thread1.start()
 
 def MoveRight():
     global Thread1
     global Thread2
-    if((not Thread1.is_alive()) and (not Thread1.is_alive())):
+    if((not Thread1.is_alive()) and (not Thread2.is_alive())):
         print("Move Right")
         Thread1 = Thread(target=MoveMotorRight)
         Thread1.start()
@@ -141,7 +139,7 @@ def MoveRight():
 def MoveLeftContinuous():
     global Thread1
     global Thread2
-    if((not Thread1.is_alive()) and (not Thread1.is_alive())):
+    if((not Thread1.is_alive()) and (not Thread2.is_alive())):
         print("Move Right Continuous")
         Thread1 = Thread(target=MoveMotorLeftContinuous)
         Thread1.start()
@@ -149,27 +147,28 @@ def MoveLeftContinuous():
 def MoveRightContinuous():
     global Thread1
     global Thread2
-    if((not Thread1.is_alive()) and (not Thread1.is_alive())):
+    if((not Thread1.is_alive()) and (not Thread2.is_alive())):
         print("Move Right Continuous")
         Thread1 = Thread(target=MoveMotorRightContinuous)
         Thread1.start()
+        
+def Stop():
+    global StopTrigger
+    StopTrigger = True
 
 def MoveMotorLeftContinuous():
     global StopTrigger
-    StopTirgger = False
-    while StopTrigger:
+    StopTrigger = False
+    while not StopTrigger:
         MoveMotorLeft()
-
+        time.sleep(0.5)
+        
 def MoveMotorRightContinuous():
     global StopTrigger
-    StopTirgger = False
-    while StopTrigger:
+    StopTrigger = False
+    while not StopTrigger:
         MoveMotorRight()
-
-def MotorStop():
-    global StopTrigger
-    StopTrigger = True
-     
+        time.sleep(0.5)
 
 def MoveMotorRight():
     print("우측로 1회 이동")
@@ -211,13 +210,12 @@ def SequenceB():
     #while GPIO.input(Switch2) == GPIO.LOW:
     #    pass
     #GPIO.output(Motor2, GPIO.LOW)
-
 with picamera.PiCamera(resolution='640x480', framerate=24) as camera:
-    output = StreamingOutput()
-    camera.start_recording(output, format='mjpeg')
-    try:
-        address = ('192.168.0.118', 8000)
-        server = StreamingServer(address, StreamingHandler)
-        server.serve_forever()
-    finally:
-        camera.stop_recording()
+   output = StreamingOutput()
+   camera.start_recording(output, format='mjpeg')
+   try:
+       address = ('192.168.35.44', 4000)
+       server = StreamingServer(address, StreamingHandler)
+       server.serve_forever()
+   finally:
+       camera.stop_recording()
